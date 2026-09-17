@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>資産ノート</title>
+<style>
+  :root{
+    --paper:#FAF8F3;
+    --ink:#20262E;
+    --ink-soft:#6B7278;
+    --line:#DEDACE;
+    --line-strong:#C7C2B3;
+    --teal:#2E6B5C;
+    --teal-bg:#E7EFEA;
+    --ochre:#A8752F;
+    --ochre-bg:#F3EADA;
+    --slate:#4C5B73;
+    --slate-bg:#E7EAF0;
+    --red:#AE4B3D;
+    --red-bg:#F5E7E3;
+    --pink-bg:#FBE4EA;
+    --card:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#181A17;
+      --ink:#EDEAE2;
+      --ink-soft:#9B9A92;
+      --line:#37372F;
+      --line-strong:#48473C;
+      --teal:#7FBBA6;
+      --teal-bg:#1E2C27;
+      --ochre:#D8A85F;
+      --ochre-bg:#2E2718;
+      --slate:#9FB0CC;
+      --slate-bg:#20242E;
+      --red:#E08D7E;
+      --red-bg:#2E1F1B;
+      --pink-bg:#3A2430;
+      --card:#212320;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#181A17;
+    --ink:#EDEAE2;
+    --ink-soft:#9B9A92;
+    --line:#37372F;
+    --line-strong:#48473C;
+    --teal:#7FBBA6;
+    --teal-bg:#1E2C27;
+    --ochre:#D8A85F;
+    --ochre-bg:#2E2718;
+    --slate:#9FB0CC;
+    --slate-bg:#20242E;
+    --red:#E08D7E;
+    --red-bg:#2E1F1B;
+    --pink-bg:#3A2430;
+    --card:#212320;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:64px;
+  }
+  .num{
+    font-family:"SF Mono",ui-monospace,"Menlo","Courier New",monospace;
+    font-variant-numeric:tabular-nums;
+    font-feature-settings:"tnum";
+  }
+
+  header{
+    padding:28px 20px 20px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{
+    margin:0 0 4px;
+    font-size:22px;
+    letter-spacing:0.02em;
+    font-weight:700;
+  }
+  header p.sub{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+
+  .cash-card{
+    margin-top:18px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 18px 16px;
+  }
+  .cash-card .label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .cash-row{
+    display:flex;
+    align-items:baseline;
+    gap:4px;
+  }
+  .cash-row span.yen{
+    font-size:18px;
+    color:var(--ink-soft);
+  }
+  .cash-row input{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-size:30px;
+    font-weight:700;
+    color:var(--ink);
+    padding:0;
+    min-width:0;
+  }
+  .cash-row input:focus{outline:none;}
+
+  .balance-strip{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .balance-strip .item{
+    border-top:1px solid var(--line);
+    padding-top:8px;
+  }
+  .balance-strip .item .k{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .balance-strip .item .v{
+    font-size:16px;
+    font-weight:600;
+    margin-top:2px;
+  }
+  .balance-strip .item .v.remain-neg{
+    color:var(--red);
+  }
+
+  .master-card{
+    margin-top:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .master-card .label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .master-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .file-btn{
+    display:inline-block;
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    background:transparent;
+  }
+  .file-btn:active{background:var(--line);}
+  .master-count{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    flex:1;
+    min-width:120px;
+  }
+  .master-clear{
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:4px;
+  }
+  .master-clear:hover{color:var(--red);}
+  .code-name-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+    min-height:15px;
+  }
+
+  section.block{
+    margin-top:30px;
+  }
+  .block-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .block-head h2{
+    font-size:16px;
+    margin:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    display:inline-block;
+  }
+  .dot.candidate{background:var(--slate);}
+  .dot.plan{background:var(--ochre);}
+  .dot.hold{background:var(--teal);}
+  .block-head .total{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  .card-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .row-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px;
+    position:relative;
+  }
+  .row-card.candidate{border-left:3px solid var(--slate);}
+  .row-card.plan{border-left:3px solid var(--ochre);}
+  .row-card.hold{border-left:3px solid var(--teal);}
+  .row-card.incomplete{background:var(--pink-bg);}
+
+  .alert-over{
+    display:none;
+    color:var(--red);
+    font-size:13px;
+    font-weight:700;
+    padding:10px 12px;
+    background:var(--red-bg);
+    border-radius:10px;
+    margin-bottom:10px;
+  }
+  .alert-over.show{display:block;}
+
+  .settle-row{
+    margin-top:10px;
+    border-top:1px solid var(--line);
+    padding-top:8px;
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+  }
+  .settle-row .field{
+    flex:1;
+    border-top:none;
+    padding-top:0;
+  }
+  .settle-btn{
+    border:1px solid transparent;
+    border-radius:8px;
+    padding:9px 14px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+    background:var(--red-bg);
+    color:var(--red);
+    flex-shrink:0;
+  }
+  .settle-btn:active{opacity:0.7;}
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:1000;
+  }
+  .modal-box{
+    background:var(--card);
+    border-radius:14px;
+    padding:20px;
+    max-width:320px;
+    width:100%;
+    box-shadow:0 12px 32px rgba(0,0,0,0.25);
+  }
+  .modal-msg{
+    font-size:14px;
+    color:var(--ink);
+    line-height:1.6;
+    margin-bottom:18px;
+    white-space:pre-wrap;
+  }
+  .modal-btn-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+  }
+  .modal-btn{
+    border:none;
+    border-radius:8px;
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .modal-btn.ok{
+    background:var(--teal);
+    color:#fff;
+  }
+  .modal-btn.cancel{
+    background:var(--line);
+    color:var(--ink);
+  }
+
+  .row-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .code-field input{
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    background:transparent;
+    color:var(--ink);
+    padding:0;
+    width:100%;
+  }
+  .code-field input:focus{outline:none;}
+  .code-field input::placeholder{color:var(--ink-soft);font-weight:400;}
+
+  .del-btn{
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:18px;
+    line-height:1;
+    padding:2px 4px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .del-btn:hover{color:var(--red);}
+
+  .row-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .row-grid.single{
+    grid-template-columns:1fr;
+  }
+  .field{
+    border-top:1px solid var(--line);
+    padding-top:6px;
+  }
+  .field .k{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:2px;
+  }
+  .field .input-line{
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+  }
+  .field input{
+    border:none;
+    background:transparent;
+    font-size:16px;
+    color:var(--ink);
+    padding:0;
+    width:100%;
+    min-width:0;
+  }
+  .field input:focus{outline:none;}
+  .field .unit{
+    font-size:12px;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+
+  .amount-line{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+  }
+  .amount-line .v{
+    color:var(--ink);
+    font-weight:600;
+  }
+
+  .memo-wrap{
+    margin-top:10px;
+    border-top:1px solid var(--line);
+    padding-top:8px;
+  }
+  .memo-wrap textarea{
+    width:100%;
+    border:none;
+    background:transparent;
+    resize:none;
+    font-size:16px;
+    color:var(--ink-soft);
+    font-family:inherit;
+    padding:0;
+    min-height:20px;
+    line-height:1.5;
+  }
+  .memo-wrap textarea:focus{outline:none;color:var(--ink);}
+  .memo-wrap textarea::placeholder{color:var(--ink-soft);opacity:0.7;}
+
+  .move-row{
+    margin-top:10px;
+    display:flex;
+    justify-content:flex-end;
+  }
+  .move-btn{
+    border:1px solid transparent;
+    border-radius:8px;
+    padding:7px 12px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .move-btn.to-plan{
+    background:var(--ochre-bg);
+    color:var(--ochre);
+  }
+  .move-btn.to-hold{
+    background:var(--teal-bg);
+    color:var(--teal);
+  }
+  .move-btn:active{
+    opacity:0.7;
+  }
+
+  .add-btn{
+    margin-top:10px;
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px dashed var(--line-strong);
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .add-btn:active{background:var(--line);}
+
+  .empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:16px 4px;
+    text-align:center;
+    border:1px dashed var(--line);
+    border-radius:12px;
+  }
+
+  footer{
+    margin-top:36px;
+    padding:16px 20px 30px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:11px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>資産ノート</h1>
+    <p class="sub">候補・買付予定・保有をまとめて管理</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="cash-card">
+    <div class="label">資金（現金）</div>
+    <div class="cash-row">
+      <span class="yen">¥</span>
+      <input id="cashInput" class="num" type="text" inputmode="numeric" placeholder="0">
+    </div>
+
+    <div class="balance-strip">
+      <div class="item">
+        <div class="k">保有中の取得金額</div>
+        <div class="v num" id="holdTotalView">¥0</div>
+      </div>
+      <div class="item">
+        <div class="k">買付予定の想定金額</div>
+        <div class="v num" id="planTotalView">¥0</div>
+      </div>
+      <div class="item" style="grid-column:1 / -1;">
+        <div class="k">予定買付後の残り資金（目安）</div>
+        <div class="v num" id="remainView">¥0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="master-card">
+    <div class="label">銘柄マスタ（CSV）— 読み込むとコード入力だけで銘柄名が表示されます</div>
+    <div class="master-row">
+      <label class="file-btn" for="masterFileInput">CSVを選択</label>
+      <input type="file" id="masterFileInput" accept=".csv,text/csv" style="display:none;">
+      <span class="master-count" id="masterCountView">未読み込み</span>
+      <button class="master-clear" id="masterClearBtn">クリア</button>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="block-head">
+      <h2><span class="dot candidate"></span>候補銘柄</h2>
+      <span class="total num" id="candidateCountView">0件</span>
+    </div>
+    <div class="card-list" id="candidateList"></div>
+    <button class="add-btn" id="addCandidateBtn">＋ 候補銘柄を追加</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2><span class="dot plan"></span>買う予定</h2>
+      <span class="total num" id="planCountView">0件</span>
+    </div>
+    <div class="alert-over" id="planOverAlert">資金オーバー：買付予定の合計金額が資金を超えています</div>
+    <div class="card-list" id="planList"></div>
+    <button class="add-btn" id="addPlanBtn">＋ 買付予定を追加</button>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2><span class="dot hold"></span>保有中</h2>
+      <span class="total num" id="holdCountView">0件</span>
+    </div>
+    <div class="card-list" id="holdList"></div>
+    <button class="add-btn" id="addHoldBtn">＋ 保有銘柄を追加</button>
+  </section>
+
+</div>
+
+<footer>データはこの端末のブラウザ内に保存されます</footer>
+
+<script>
+(function(){
+  const STORAGE_KEY = "stock-fund-tracker-v2";
+  const OLD_STORAGE_KEY = "stock-fund-tracker-v1";
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    // 旧バージョンのデータがあれば引き継ぐ
+    try{
+      const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
+      if(oldRaw){
+        const old = JSON.parse(oldRaw);
+        return {
+          cash: old.cash || 0,
+          candidates: [],
+          plans: Array.isArray(old.plans) ? old.plans : [],
+          holdings: Array.isArray(old.holdings) ? old.holdings : []
+        };
+      }
+    }catch(e){}
+    return { cash: 0, candidates: [], plans: [], holdings: [] };
+  }
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      console.error("保存に失敗しました", e);
+    }
+  }
+
+  let state = loadState();
+  if(!Array.isArray(state.candidates)) state.candidates = [];
+  if(!Array.isArray(state.plans)) state.plans = [];
+  if(!Array.isArray(state.holdings)) state.holdings = [];
+  if(typeof state.cash !== "number") state.cash = 0;
+
+  const MASTER_KEY = "stock-fund-tracker-master-v1";
+
+  function loadMaster(){
+    try{
+      const raw = localStorage.getItem(MASTER_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {};
+  }
+  function saveMaster(){
+    try{
+      localStorage.setItem(MASTER_KEY, JSON.stringify(masterMap));
+    }catch(e){
+      console.error("銘柄マスタの保存に失敗しました", e);
+    }
+  }
+  let masterMap = loadMaster();
+
+  function splitCSVLine(line){
+    const out = [];
+    let cur = "";
+    let inQuotes = false;
+    for(let i = 0; i < line.length; i++){
+      const ch = line[i];
+      if(inQuotes){
+        if(ch === '"'){
+          if(line[i+1] === '"'){ cur += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          cur += ch;
+        }
+      } else {
+        if(ch === '"'){ inQuotes = true; }
+        else if(ch === ','){ out.push(cur); cur = ""; }
+        else { cur += ch; }
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function parseCSV(text){
+    const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length > 0);
+    const map = {};
+    lines.forEach(line => {
+      const cols = splitCSVLine(line);
+      if(cols.length < 2) return;
+      const code = cols[0].trim();
+      const name = cols[1].trim();
+      if(!code || !name) return;
+      if(/^(銘柄)?コード$/i.test(code) || /^code$/i.test(code)) return; // header row
+      map[code] = name;
+    });
+    return map;
+  }
+
+  function lookupName(code){
+    if(!code) return "";
+    const trimmed = String(code).trim();
+    if(!trimmed) return "";
+    return masterMap[trimmed] || masterMap[trimmed.toUpperCase()] || "";
+  }
+
+  function renderMasterCount(){
+    const n = Object.keys(masterMap).length;
+    masterCountView.textContent = n > 0 ? (n + "件登録済み") : "未読み込み";
+  }
+
+  function uid(){
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  function fmtYen(n){
+    n = Math.round(n || 0);
+    return "¥" + n.toLocaleString("ja-JP");
+  }
+
+  function parseNum(v){
+    if(v === null || v === undefined) return 0;
+    const cleaned = String(v).replace(/[^0-9.\-]/g, "");
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // Claudeのアーティファクトプレビュー等、サンドボックス化された環境では
+  // window.confirm / window.alert が動かないため、自前のダイアログを使う
+  function showDialog(opts){
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+
+    const box = document.createElement("div");
+    box.className = "modal-box";
+
+    const msg = document.createElement("div");
+    msg.className = "modal-msg";
+    msg.textContent = opts.message;
+    box.appendChild(msg);
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "modal-btn-row";
+
+    function close(){
+      if(overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+
+    if(opts.showCancel){
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "modal-btn cancel";
+      cancelBtn.textContent = "キャンセル";
+      cancelBtn.addEventListener("click", () => {
+        close();
+        if(opts.onCancel) opts.onCancel();
+      });
+      btnRow.appendChild(cancelBtn);
+    }
+
+    const okBtn = document.createElement("button");
+    okBtn.className = "modal-btn ok";
+    okBtn.textContent = opts.okLabel || "OK";
+    okBtn.addEventListener("click", () => {
+      close();
+      if(opts.onOk) opts.onOk();
+    });
+    btnRow.appendChild(okBtn);
+
+    box.appendChild(btnRow);
+    overlay.appendChild(box);
+    overlay.addEventListener("click", (e) => {
+      if(e.target === overlay){
+        close();
+        if(opts.onCancel) opts.onCancel();
+      }
+    });
+    document.body.appendChild(overlay);
+  }
+
+  function showAlert(message){
+    showDialog({ message: message, showCancel: false });
+  }
+
+  function showConfirm(message, onOk){
+    showDialog({ message: message, showCancel: true, okLabel: "決済する", onOk: onOk });
+  }
+
+  const cashInput = document.getElementById("cashInput");
+  const candidateList = document.getElementById("candidateList");
+  const planList = document.getElementById("planList");
+  const holdList = document.getElementById("holdList");
+  const holdTotalView = document.getElementById("holdTotalView");
+  const planTotalView = document.getElementById("planTotalView");
+  const remainView = document.getElementById("remainView");
+  const candidateCountView = document.getElementById("candidateCountView");
+  const planCountView = document.getElementById("planCountView");
+  const holdCountView = document.getElementById("holdCountView");
+  const masterFileInput = document.getElementById("masterFileInput");
+  const masterCountView = document.getElementById("masterCountView");
+  const masterClearBtn = document.getElementById("masterClearBtn");
+  const planOverAlert = document.getElementById("planOverAlert");
+
+  renderMasterCount();
+
+  masterFileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = parseCSV(String(reader.result || ""));
+        masterMap = Object.assign({}, masterMap, parsed);
+        saveMaster();
+        renderMasterCount();
+        renderAll();
+      }catch(err){
+        console.error(err);
+        showAlert("CSVの読み込みに失敗しました");
+      }
+    };
+    reader.onerror = () => {
+      showAlert("ファイルの読み込みに失敗しました");
+    };
+    reader.readAsText(file, "UTF-8");
+    masterFileInput.value = "";
+  });
+
+  masterClearBtn.addEventListener("click", () => {
+    if(Object.keys(masterMap).length === 0) return;
+    showDialog({
+      message: "読み込んだ銘柄マスタを削除しますか？",
+      showCancel: true,
+      okLabel: "削除する",
+      onOk: () => {
+        masterMap = {};
+        saveMaster();
+        renderMasterCount();
+        renderAll();
+      }
+    });
+  });
+
+  function syncCashInput(){
+    cashInput.value = state.cash ? state.cash.toLocaleString("ja-JP") : "";
+  }
+
+  cashInput.value = state.cash ? state.cash.toLocaleString("ja-JP") : "";
+  cashInput.addEventListener("input", () => {
+    state.cash = parseNum(cashInput.value);
+    saveState();
+    renderTotals();
+  });
+  cashInput.addEventListener("blur", () => {
+    syncCashInput();
+  });
+
+  function renderTotals(){
+    const planTotal = state.plans.reduce((s, p) => s + parseNum(p.price) * parseNum(p.shares), 0);
+    const holdTotal = state.holdings.reduce((s, h) => s + parseNum(h.price) * parseNum(h.shares), 0);
+    planTotalView.textContent = fmtYen(planTotal);
+    holdTotalView.textContent = fmtYen(holdTotal);
+    const remain = parseNum(state.cash) - planTotal;
+    remainView.textContent = fmtYen(remain);
+    remainView.classList.toggle("remain-neg", remain < 0);
+    candidateCountView.textContent = state.candidates.length + "件";
+    planCountView.textContent = state.plans.length + "件";
+    holdCountView.textContent = state.holdings.length + "件";
+    planOverAlert.classList.toggle("show", planTotal > parseNum(state.cash));
+  }
+
+  // opts: {
+  //   priceLabel, showShares(bool), showAmount(bool), amountLabel,
+  //   removeSelf(), moveConfig: { label, className, onMove } | null
+  // }
+  function makeRowCard(item, kind, opts){
+    const card = document.createElement("div");
+    card.className = "row-card " + kind;
+
+    function updateIncomplete(){
+      const priceOk = !!parseNum(item.price);
+      const sharesOk = opts.showShares ? !!parseNum(item.shares) : true;
+      card.classList.toggle("incomplete", !(priceOk && sharesOk));
+    }
+
+    const top = document.createElement("div");
+    top.className = "row-top";
+
+    const codeField = document.createElement("div");
+    codeField.className = "code-field";
+    codeField.style.flex = "1";
+    const codeInput = document.createElement("input");
+    codeInput.type = "text";
+    codeInput.placeholder = "銘柄コード・銘柄名";
+    codeInput.value = item.code || "";
+    codeField.appendChild(codeInput);
+
+    const nameHint = document.createElement("div");
+    nameHint.className = "code-name-hint";
+    nameHint.textContent = lookupName(item.code);
+    codeField.appendChild(nameHint);
+
+    codeInput.addEventListener("input", () => {
+      item.code = codeInput.value;
+      saveState();
+      nameHint.textContent = lookupName(item.code);
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "del-btn";
+    delBtn.setAttribute("aria-label", "削除");
+    delBtn.textContent = "✕";
+    delBtn.addEventListener("click", () => {
+      (opts.onDelete || opts.removeSelf)();
+    });
+
+    top.appendChild(codeField);
+    top.appendChild(delBtn);
+    card.appendChild(top);
+
+    const grid = document.createElement("div");
+    grid.className = "row-grid" + (opts.showShares ? "" : " single");
+
+    const priceField = document.createElement("div");
+    priceField.className = "field";
+    const priceK = document.createElement("div");
+    priceK.className = "k";
+    priceK.textContent = opts.priceLabel;
+    const priceLine = document.createElement("div");
+    priceLine.className = "input-line";
+    const priceUnitPrefix = document.createElement("span");
+    priceUnitPrefix.className = "unit";
+    priceUnitPrefix.textContent = "¥";
+    const priceInput = document.createElement("input");
+    priceInput.type = "text";
+    priceInput.inputMode = "numeric";
+    priceInput.className = "num";
+    priceInput.placeholder = "0";
+    priceInput.value = item.price ? Number(item.price).toLocaleString("ja-JP") : "";
+    priceLine.appendChild(priceUnitPrefix);
+    priceLine.appendChild(priceInput);
+    priceField.appendChild(priceK);
+    priceField.appendChild(priceLine);
+    grid.appendChild(priceField);
+
+    let sharesInput = null;
+    if(opts.showShares){
+      const sharesField = document.createElement("div");
+      sharesField.className = "field";
+      const sharesK = document.createElement("div");
+      sharesK.className = "k";
+      sharesK.textContent = "株数";
+      const sharesLine = document.createElement("div");
+      sharesLine.className = "input-line";
+      sharesInput = document.createElement("input");
+      sharesInput.type = "text";
+      sharesInput.inputMode = "numeric";
+      sharesInput.className = "num";
+      sharesInput.placeholder = "0";
+      sharesInput.value = item.shares ? Number(item.shares).toLocaleString("ja-JP") : "";
+      const sharesUnitSuffix = document.createElement("span");
+      sharesUnitSuffix.className = "unit";
+      sharesUnitSuffix.textContent = "株";
+      sharesLine.appendChild(sharesInput);
+      sharesLine.appendChild(sharesUnitSuffix);
+      sharesField.appendChild(sharesK);
+      sharesField.appendChild(sharesLine);
+      grid.appendChild(sharesField);
+    }
+
+    card.appendChild(grid);
+
+    let amountValue = null;
+    function updateAmount(){
+      if(!opts.showAmount) return;
+      const amt = parseNum(item.price) * parseNum(item.shares);
+      amountValue.textContent = fmtYen(amt);
+    }
+    if(opts.showAmount){
+      const amountLine = document.createElement("div");
+      amountLine.className = "amount-line";
+      const amountLabel = document.createElement("span");
+      amountLabel.textContent = opts.amountLabel;
+      amountValue = document.createElement("span");
+      amountValue.className = "v num";
+      amountLine.appendChild(amountLabel);
+      amountLine.appendChild(amountValue);
+      card.appendChild(amountLine);
+      updateAmount();
+    }
+
+    let lastAmount = opts.cashImpact ? parseNum(item.price) * parseNum(item.shares) : 0;
+    function applyCashDelta(){
+      if(!opts.cashImpact) return;
+      const newAmount = parseNum(item.price) * parseNum(item.shares);
+      const diff = newAmount - lastAmount;
+      if(diff !== 0){
+        state.cash = parseNum(state.cash) - diff;
+        lastAmount = newAmount;
+        syncCashInput();
+      }
+    }
+
+    priceInput.addEventListener("input", () => {
+      item.price = parseNum(priceInput.value);
+      applyCashDelta();
+      saveState();
+      updateAmount();
+      updateIncomplete();
+      renderTotals();
+    });
+    priceInput.addEventListener("blur", () => {
+      priceInput.value = item.price ? Number(item.price).toLocaleString("ja-JP") : "";
+    });
+
+    if(sharesInput){
+      sharesInput.addEventListener("input", () => {
+        item.shares = parseNum(sharesInput.value);
+        applyCashDelta();
+        saveState();
+        updateAmount();
+        updateIncomplete();
+        renderTotals();
+      });
+      sharesInput.addEventListener("blur", () => {
+        sharesInput.value = item.shares ? Number(item.shares).toLocaleString("ja-JP") : "";
+      });
+    }
+
+    const memoWrap = document.createElement("div");
+    memoWrap.className = "memo-wrap";
+    const memoTextarea = document.createElement("textarea");
+    memoTextarea.placeholder = "メモ（買う理由、狙う条件など）";
+    memoTextarea.value = item.memo || "";
+    memoTextarea.rows = 1;
+    function autoResize(){
+      memoTextarea.style.height = "auto";
+      memoTextarea.style.height = memoTextarea.scrollHeight + "px";
+    }
+    memoTextarea.addEventListener("input", () => {
+      item.memo = memoTextarea.value;
+      saveState();
+      autoResize();
+    });
+    memoWrap.appendChild(memoTextarea);
+    card.appendChild(memoWrap);
+    setTimeout(autoResize, 0);
+
+    if(opts.settleConfig){
+      const settleRow = document.createElement("div");
+      settleRow.className = "settle-row";
+
+      const settleField = document.createElement("div");
+      settleField.className = "field";
+      const settleK = document.createElement("div");
+      settleK.className = "k";
+      settleK.textContent = "決済株価";
+      const settleLine = document.createElement("div");
+      settleLine.className = "input-line";
+      const settleUnitPrefix = document.createElement("span");
+      settleUnitPrefix.className = "unit";
+      settleUnitPrefix.textContent = "¥";
+      const settleInput = document.createElement("input");
+      settleInput.type = "text";
+      settleInput.inputMode = "numeric";
+      settleInput.className = "num";
+      settleInput.placeholder = "0";
+      settleInput.value = item.settlePrice ? Number(item.settlePrice).toLocaleString("ja-JP") : "";
+      settleLine.appendChild(settleUnitPrefix);
+      settleLine.appendChild(settleInput);
+      settleField.appendChild(settleK);
+      settleField.appendChild(settleLine);
+
+      settleInput.addEventListener("input", () => {
+        item.settlePrice = parseNum(settleInput.value);
+        saveState();
+      });
+      settleInput.addEventListener("blur", () => {
+        settleInput.value = item.settlePrice ? Number(item.settlePrice).toLocaleString("ja-JP") : "";
+      });
+
+      const settleBtn = document.createElement("button");
+      settleBtn.className = "settle-btn";
+      settleBtn.textContent = "決済";
+      settleBtn.addEventListener("click", () => {
+        opts.settleConfig.onSettle(parseNum(item.settlePrice));
+      });
+
+      settleRow.appendChild(settleField);
+      settleRow.appendChild(settleBtn);
+      card.appendChild(settleRow);
+    }
+
+    if(opts.moveConfig){
+      const moveRow = document.createElement("div");
+      moveRow.className = "move-row";
+      const moveBtn = document.createElement("button");
+      moveBtn.className = "move-btn " + opts.moveConfig.className;
+      moveBtn.textContent = opts.moveConfig.label;
+      moveBtn.addEventListener("click", () => {
+        opts.moveConfig.onMove();
+      });
+      moveRow.appendChild(moveBtn);
+      card.appendChild(moveRow);
+    }
+
+    updateIncomplete();
+
+    return card;
+  }
+
+  function renderList(container, arr, kind, cardOpts, emptyText){
+    container.innerHTML = "";
+    if(arr.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = emptyText;
+      container.appendChild(empty);
+      return;
+    }
+    arr.forEach((item) => {
+      const config = cardOpts(item, () => {
+        const idx = arr.indexOf(item);
+        if(idx > -1) arr.splice(idx, 1);
+        saveState();
+        renderAll();
+      });
+      container.appendChild(makeRowCard(item, kind, config));
+    });
+  }
+
+  function renderAll(){
+    renderList(candidateList, state.candidates, "candidate", (item, removeSelf) => ({
+      priceLabel: "目安株価",
+      showShares: false,
+      showAmount: false,
+      removeSelf: removeSelf,
+      moveConfig: {
+        label: "買う予定へ移動",
+        className: "to-plan",
+        onMove: () => {
+          state.plans.push({
+            id: uid(),
+            code: item.code || "",
+            price: item.price || 0,
+            shares: 0,
+            memo: item.memo || ""
+          });
+          removeSelf();
+        }
+      }
+    }), "候補銘柄はまだありません");
+
+    renderList(planList, state.plans, "plan", (item, removeSelf) => ({
+      priceLabel: "目安株価",
+      showShares: true,
+      showAmount: true,
+      amountLabel: "想定必要額",
+      removeSelf: removeSelf,
+      moveConfig: {
+        label: "保有にする",
+        className: "to-hold",
+        onMove: () => {
+          state.holdings.push({
+            id: uid(),
+            code: item.code || "",
+            price: 0,
+            shares: item.shares || 0,
+            memo: item.memo || ""
+          });
+          removeSelf();
+        }
+      }
+    }), "買う予定の銘柄はまだありません");
+
+    renderList(holdList, state.holdings, "hold", (item, removeSelf) => ({
+      priceLabel: "取得株価",
+      showShares: true,
+      showAmount: true,
+      amountLabel: "取得金額",
+      removeSelf: removeSelf,
+      cashImpact: true,
+      onDelete: () => {
+        const amt = parseNum(item.price) * parseNum(item.shares);
+        if(amt){
+          state.cash = parseNum(state.cash) + amt;
+          syncCashInput();
+        }
+        removeSelf();
+      },
+      moveConfig: null,
+      settleConfig: {
+        onSettle: (settlePrice) => {
+          if(!settlePrice){
+            showAlert("決済株価を入力してください");
+            return;
+          }
+          const proceeds = settlePrice * parseNum(item.shares);
+          showConfirm(
+            (item.code || "この銘柄") + "を" + fmtYen(proceeds) + "で決済し、資金に反映します。よろしいですか？",
+            () => {
+              state.cash = parseNum(state.cash) + proceeds;
+              syncCashInput();
+              removeSelf();
+            }
+          );
+        }
+      }
+    }), "保有中の銘柄はまだありません");
+
+    renderTotals();
+  }
+
+  document.getElementById("addCandidateBtn").addEventListener("click", () => {
+    state.candidates.push({ id: uid(), code: "", price: 0, memo: "" });
+    saveState();
+    renderAll();
+  });
+  document.getElementById("addPlanBtn").addEventListener("click", () => {
+    state.plans.push({ id: uid(), code: "", price: 0, shares: 0, memo: "" });
+    saveState();
+    renderAll();
+  });
+  document.getElementById("addHoldBtn").addEventListener("click", () => {
+    state.holdings.push({ id: uid(), code: "", price: 0, shares: 0, memo: "" });
+    saveState();
+    renderAll();
+  });
+
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
