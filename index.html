@@ -263,6 +263,12 @@
   }
   .alert-over.show{display:block;}
 
+  .budget-info{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+
   .settle-row{
     margin-top:10px;
     border-top:1px solid var(--line);
@@ -551,6 +557,7 @@
       <h2><span class="dot plan"></span>買う予定</h2>
       <span class="total num" id="planCountView">0件</span>
     </div>
+    <div class="budget-info" id="planBudgetInfo"></div>
     <div class="alert-over" id="planOverAlert">資金オーバー：買付予定の合計金額が資金を超えています</div>
     <div class="card-list" id="planList"></div>
     <button class="add-btn" id="addPlanBtn">＋ 買付予定を追加</button>
@@ -767,6 +774,7 @@
   const masterCountView = document.getElementById("masterCountView");
   const masterClearBtn = document.getElementById("masterClearBtn");
   const planOverAlert = document.getElementById("planOverAlert");
+  const planBudgetInfo = document.getElementById("planBudgetInfo");
 
   renderMasterCount();
 
@@ -816,7 +824,8 @@
   cashInput.addEventListener("input", () => {
     state.cash = parseNum(cashInput.value);
     saveState();
-    renderTotals();
+    recomputePlanAutoShares();
+    renderAll();
   });
   cashInput.addEventListener("blur", () => {
     syncCashInput();
@@ -834,6 +843,31 @@
     planCountView.textContent = state.plans.length + "件";
     holdCountView.textContent = state.holdings.length + "件";
     planOverAlert.classList.toggle("show", planTotal > parseNum(state.cash));
+
+    const slots = MAX_HOLDINGS - state.holdings.length;
+    if(slots > 0){
+      const budget = calcPerSlotBudget();
+      planBudgetInfo.textContent = "残り枠 " + slots + "／" + MAX_HOLDINGS + "銘柄 ・ 1銘柄あたりの目安予算 " + fmtYen(budget);
+    } else {
+      planBudgetInfo.textContent = "保有銘柄が上限（" + MAX_HOLDINGS + "銘柄）に達しています";
+    }
+  }
+
+  const MAX_HOLDINGS = 5;
+
+  function calcPerSlotBudget(){
+    const slots = MAX_HOLDINGS - state.holdings.length;
+    if(slots <= 0) return 0;
+    return parseNum(state.cash) / slots;
+  }
+
+  function recomputePlanAutoShares(){
+    const budget = calcPerSlotBudget();
+    state.plans.forEach((p) => {
+      if(p.sharesAuto === false) return;
+      const price = parseNum(p.price);
+      p.shares = (budget > 0 && price > 0) ? Math.floor(budget / price) : 0;
+    });
   }
 
   // opts: {
@@ -911,10 +945,11 @@
     grid.appendChild(priceField);
 
     let sharesInput = null;
+    let sharesK = null;
     if(opts.showShares){
       const sharesField = document.createElement("div");
       sharesField.className = "field";
-      const sharesK = document.createElement("div");
+      sharesK = document.createElement("div");
       sharesK.className = "k";
       sharesK.textContent = "株数";
       const sharesLine = document.createElement("div");
@@ -934,6 +969,12 @@
       sharesField.appendChild(sharesLine);
       grid.appendChild(sharesField);
     }
+
+    function updateSharesLabel(){
+      if(!opts.autoShares || !sharesK) return;
+      sharesK.textContent = item.sharesAuto === false ? "株数" : "株数（自動計算）";
+    }
+    updateSharesLabel();
 
     card.appendChild(grid);
 
@@ -971,6 +1012,14 @@
     priceInput.addEventListener("input", () => {
       item.price = parseNum(priceInput.value);
       applyCashDelta();
+      if(opts.autoShares && item.sharesAuto !== false){
+        const budget = calcPerSlotBudget();
+        const price = parseNum(item.price);
+        item.shares = (budget > 0 && price > 0) ? Math.floor(budget / price) : 0;
+        if(sharesInput){
+          sharesInput.value = item.shares ? Number(item.shares).toLocaleString("ja-JP") : "";
+        }
+      }
       saveState();
       updateAmount();
       updateIncomplete();
@@ -983,6 +1032,10 @@
     if(sharesInput){
       sharesInput.addEventListener("input", () => {
         item.shares = parseNum(sharesInput.value);
+        if(opts.autoShares){
+          item.sharesAuto = false;
+          updateSharesLabel();
+        }
         applyCashDelta();
         saveState();
         updateAmount();
@@ -1097,6 +1150,8 @@
   }
 
   function renderAll(){
+    recomputePlanAutoShares();
+
     renderList(candidateList, state.candidates, "candidate", (item, removeSelf) => ({
       priceLabel: "目安株価",
       showShares: false,
@@ -1111,6 +1166,7 @@
             code: item.code || "",
             price: item.price || 0,
             shares: 0,
+            sharesAuto: true,
             memo: item.memo || ""
           });
           removeSelf();
@@ -1124,6 +1180,7 @@
       showAmount: true,
       amountLabel: "想定必要額",
       removeSelf: removeSelf,
+      autoShares: true,
       moveConfig: {
         label: "保有にする",
         className: "to-hold",
@@ -1184,7 +1241,7 @@
     renderAll();
   });
   document.getElementById("addPlanBtn").addEventListener("click", () => {
-    state.plans.push({ id: uid(), code: "", price: 0, shares: 0, memo: "" });
+    state.plans.push({ id: uid(), code: "", price: 0, shares: 0, sharesAuto: true, memo: "" });
     saveState();
     renderAll();
   });
